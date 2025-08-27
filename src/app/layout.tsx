@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { StackProvider, StackTheme, UserButton } from "@stackframe/stack";
+import { stackServerApp } from "../stack";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import "./globals.css";
@@ -28,7 +30,19 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <StackProvider app={stackServerApp}>
+          <StackTheme>
+            <div className="flex flex-col justify-between items-center w-lg m-auto my-8">
+              <header className="flex justify-between items-center w-full p-4">
+                <h1 className="font-mono">Versions</h1>
+
+                <UserButton />
+              </header>
+
+              <div>{children}</div>
+            </div>
+          </StackTheme>
+        </StackProvider>
       </body>
     </html>
   );
