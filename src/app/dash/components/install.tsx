@@ -8,9 +8,7 @@ export default function Install() {
   return (
     <div className="max-w-2xl mx-auto p-8 flex items-center justify-center h-dvh">
       <button
-        onClick={() =>
-          router.push("https://github.com/apps/dev-versions/installations/new")
-        }
+        onClick={() => router.push(process.env.NEXT_PUBLIC_GITHUB_APP_URL!)}
         className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
       >
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
