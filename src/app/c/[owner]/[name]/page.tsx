@@ -1,0 +1,54 @@
+import Markdown from "react-markdown";
+import { database } from "@/lib/database";
+import { changelogs, versions } from "@/database/schema";
+import { and, desc, eq } from "drizzle-orm";
+import { notFound } from "next/navigation";
+import Header from "./components/header";
+
+interface PageProps {
+  params: Promise<{
+    owner: string;
+    name: string;
+  }>;
+}
+
+export default async function Page({ params }: PageProps) {
+  const { owner, name } = await params;
+
+  const changelog = await database
+    .select()
+    .from(changelogs)
+    .where(and(eq(changelogs.owner, owner), eq(changelogs.name, name)))
+    .limit(1);
+
+  if (changelog.length === 0) {
+    notFound();
+  }
+
+  const latestVersion = await database
+    .select()
+    .from(versions)
+    .where(and(eq(versions.changelogId, changelog[0].id)))
+    .orderBy(desc(versions.createdAt))
+    .limit(1);
+
+  if (latestVersion.length === 0) {
+    notFound();
+  }
+
+  const version = latestVersion[0];
+
+  return (
+    <div>
+      <h1 className="text-4xl mb-4">
+        <span className="font-bold ">{owner}</span>/{name}
+      </h1>
+
+      <Header owner={owner} name={name} version={version} />
+
+      <div className="prose max-w-none">
+        <Markdown>{version.content as string}</Markdown>
+      </div>
+    </div>
+  );
+}

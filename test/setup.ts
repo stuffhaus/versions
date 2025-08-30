@@ -1,42 +1,36 @@
-import { expect } from "vitest";
+import { expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
 import * as matchers from "@testing-library/jest-dom/matchers";
-import { vi } from "vitest";
+import {
+  setupTestDatabase,
+  teardownTestDatabase,
+  clearTestDatabase,
+} from "./test-db";
 
 expect.extend(matchers);
 
+beforeAll(() => setupTestDatabase());
+beforeEach(() => clearTestDatabase());
+afterAll(() => teardownTestDatabase());
+
 vi.mock("server-only", () => ({}));
+vi.mock("swr", () => ({ default: vi.fn() }));
 
 vi.mock("@stackframe/stack", () => ({
-  StackServerApp: vi.fn(() => ({
-    getUser: vi.fn(),
-  })),
+  StackServerApp: vi.fn(() => ({ getUser: vi.fn() })),
   StackProvider: ({ children }: { children: React.ReactNode }) => children,
   StackTheme: ({ children }: { children: React.ReactNode }) => children,
   UserButton: () => null,
 }));
 
 vi.mock("@/stack", () => ({
-  stackServerApp: {
-    getUser: vi.fn(),
-  },
+  stackServerApp: { getUser: vi.fn() },
 }));
 
-vi.mock("@/lib/database", () => ({
-  database: {
-    $count: vi.fn(),
-    select: vi.fn(() => ({
-      from: vi.fn(() => ({
-        where: vi.fn(() => ({
-          limit: vi.fn(),
-        })),
-      })),
-    })),
-    insert: vi.fn(() => ({
-      values: vi.fn(),
-    })),
-  },
-}));
-
-vi.mock("swr", () => ({
-  default: vi.fn(),
-}));
+vi.mock("@/lib/database", async () => {
+  const { getTestDatabase } = await import("./test-db");
+  return {
+    get database() {
+      return getTestDatabase();
+    },
+  };
+});

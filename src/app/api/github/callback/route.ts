@@ -1,40 +1,112 @@
 import { database } from "@/lib/database";
 import { stackServerApp } from "@/stack";
 import { NextRequest, NextResponse } from "next/server";
-import { installations } from "../../../../../database/schema";
+import { createGitHubClient } from "@/lib/github";
+import { changelogs, installations, versions } from "@/database/schema";
+import { parser } from "keep-a-changelog";
+import {
+  GitHubCallbackQuerySchema,
+  validateRequest,
+  createErrorResponse,
+} from "@/lib/api-types";
 
+// Handle GitHub App installation callback
 export async function GET(request: NextRequest) {
   try {
     const user = await stackServerApp.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return createErrorResponse("Unauthorized", 401);
     }
 
     const { searchParams } = new URL(request.url);
-    const installationId = searchParams.get("installation_id");
-    const setupAction = searchParams.get("setup_action");
+    const queryData = {
+      installation_id: searchParams.get("installation_id") || "",
+      setup_action: searchParams.get("setup_action") || undefined,
+    };
 
-    if (!installationId) {
+    const validation = validateRequest(GitHubCallbackQuerySchema, queryData);
+
+    if (!validation.success) {
       console.error("No installation ID found in URL");
 
-      return NextResponse.json(
-        { error: "No installation ID found" },
-        { status: 400 },
-      );
+      return createErrorResponse("No installation ID found", 400);
     }
 
+    const { installation_id: installationId, setup_action: setupAction } =
+      validation.data;
+
+    // Only create database record for new installations
     if (setupAction === "install") {
-      await database.insert(installations).values({
-        installationId,
-        userId: user.id,
-      });
+      const installed = await database
+        .insert(installations)
+        .values({
+          installationId,
+          userId: user.id,
+        })
+        .returning();
+
+      const octokit = createGitHubClient(installationId);
+
+      const {
+        data: { repositories },
+      } = await octokit.rest.apps.listReposAccessibleToInstallation();
+
+      // Process all accessible repositories for CHANGELOG.md files
+      for (const repo of repositories) {
+        let changelog;
+
+        try {
+          changelog = (
+            await octokit.rest.repos.getContent({
+              owner: repo.owner.login,
+              repo: repo.name,
+              path: "CHANGELOG.md",
+            })
+          ).data;
+        } catch (_) {
+          // Skip repos without CHANGELOG.md
+          continue;
+        }
+
+        if (!Array.isArray(changelog) && changelog.type === "file") {
+          const decoded = Buffer.from(changelog.content, "base64").toString();
+          const parsed = parser(decoded);
+
+          // Save changelog and parse all existing versions
+          await database.transaction(async (tx) => {
+            const saved = await tx
+              .insert(changelogs)
+              .values({
+                userId: user.id,
+                installationId: installed[0].id,
+                repositoryId: repo.id,
+                owner: repo.owner.login,
+                name: repo.name,
+                raw: decoded,
+              })
+              .returning();
+
+            for (const version of parsed.releases) {
+              if (!version.version) continue;
+
+              await tx.insert(versions).values({
+                userId: user.id,
+                changelogId: saved[0].id,
+                version: version.version,
+                releaseDate: version.date,
+                content: version.toString(),
+              });
+            }
+          });
+        }
+      }
     }
 
     return NextResponse.redirect(new URL("/dash", request.url));
   } catch (error) {
     console.error("GitHub installation callback error:", error);
 
-    return NextResponse.json({ error: "Installation failed" }, { status: 500 });
+    return createErrorResponse("Installation failed", 500);
   }
 }
