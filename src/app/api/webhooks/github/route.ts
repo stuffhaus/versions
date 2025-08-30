@@ -12,6 +12,7 @@ import {
   createSuccessResponse,
 } from "@/lib/api-types";
 
+// Verify GitHub webhook signature using HMAC SHA-256
 function verifySignature(
   payload: string,
   signature: string,
@@ -24,6 +25,7 @@ function verifySignature(
   return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));
 }
 
+// Process GitHub webhook push events for CHANGELOG.md updates
 export async function POST(request: NextRequest) {
   try {
     const signature = request.headers.get("x-hub-signature-256");
@@ -70,6 +72,7 @@ export async function POST(request: NextRequest) {
     const payload = validation.data;
     const { installation, repository, head_commit } = payload;
 
+    // Only process commits that modify CHANGELOG.md
     const changelogFiles = ["CHANGELOG.md"];
     const hasChangelogUpdate =
       head_commit.modified.some((file) => changelogFiles.includes(file)) ||
@@ -135,11 +138,13 @@ export async function POST(request: NextRequest) {
 
     const existingVersionSet = new Set(existingVersions.map((v) => v.version));
 
+    // Filter out versions that already exist in database
     const newVersions = parsed.releases.filter(
       (release) => release.version && !existingVersionSet.has(release.version),
     );
 
     if (newVersions.length > 0) {
+      // Update changelog and insert new versions atomically
       await database.transaction(async (tx) => {
         await tx
           .update(changelogs)

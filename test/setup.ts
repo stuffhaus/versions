@@ -12,7 +12,6 @@ beforeAll(() => setupTestDatabase());
 beforeEach(() => clearTestDatabase());
 afterAll(() => teardownTestDatabase());
 
-// Mocks
 vi.mock("server-only", () => ({}));
 vi.mock("swr", () => ({ default: vi.fn() }));
 

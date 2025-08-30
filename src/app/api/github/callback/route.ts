@@ -10,6 +10,7 @@ import {
   createErrorResponse,
 } from "@/lib/api-types";
 
+// Handle GitHub App installation callback
 export async function GET(request: NextRequest) {
   try {
     const user = await stackServerApp.getUser();
@@ -25,14 +26,17 @@ export async function GET(request: NextRequest) {
     };
 
     const validation = validateRequest(GitHubCallbackQuerySchema, queryData);
+
     if (!validation.success) {
       console.error("No installation ID found in URL");
+
       return createErrorResponse("No installation ID found", 400);
     }
 
     const { installation_id: installationId, setup_action: setupAction } =
       validation.data;
 
+    // Only create database record for new installations
     if (setupAction === "install") {
       const installed = await database
         .insert(installations)
@@ -48,6 +52,7 @@ export async function GET(request: NextRequest) {
         data: { repositories },
       } = await octokit.rest.apps.listReposAccessibleToInstallation();
 
+      // Process all accessible repositories for CHANGELOG.md files
       for (const repo of repositories) {
         let changelog;
 
@@ -68,6 +73,7 @@ export async function GET(request: NextRequest) {
           const decoded = Buffer.from(changelog.content, "base64").toString();
           const parsed = parser(decoded);
 
+          // Save changelog and parse all existing versions
           await database.transaction(async (tx) => {
             const saved = await tx
               .insert(changelogs)

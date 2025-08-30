@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-// GitHub Webhook Schemas
+// GitHub Webhook payload validation schema
 export const GitHubWebhookPayloadSchema = z.object({
   installation: z.object({
     id: z.number(),
@@ -60,14 +60,17 @@ export type WebhookSuccessResponse = z.infer<
 >;
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
 
+// Consistent error response helper
 export function createErrorResponse(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
 }
 
+// Consistent success response helper
 export function createSuccessResponse<T>(data: T, status: number = 200) {
   return NextResponse.json(data, { status });
 }
 
+// Generic request validation with Zod schema
 export function validateRequest<T>(
   schema: z.ZodSchema<T>,
   data: unknown,

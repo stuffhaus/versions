@@ -13,7 +13,7 @@ vi.mock("keep-a-changelog", () => ({ parser: vi.fn() }));
 describe("POST /api/webhooks/github", () => {
   const validSignature = "sha256=valid-signature";
   const webhookSecret = "test-webhook-secret";
-  
+
   const mockPushPayload = {
     installation: { id: 123 },
     repository: {
@@ -44,7 +44,7 @@ describe("POST /api/webhooks/github", () => {
     vi.spyOn(crypto, "createHmac").mockReturnValue({
       update: vi.fn().mockReturnThis(),
       digest: vi.fn().mockReturnValue("valid-signature"),
-    } as crypto.Hmac);
+    } as unknown as crypto.Hmac);
     vi.spyOn(crypto, "timingSafeEqual").mockReturnValue(true);
   });
 
@@ -70,16 +70,20 @@ describe("POST /api/webhooks/github", () => {
       raw: "# Changelog\n## 1.0.0\n- Initial release",
     });
 
-    // Mock GitHub API
-    vi.mocked(githubModule.createGitHubClient).mockReturnValue(mockOctokit as ReturnType<typeof githubModule.createGitHubClient>);
+    vi.mocked(githubModule.createGitHubClient).mockReturnValue(
+      mockOctokit as unknown as ReturnType<
+        typeof githubModule.createGitHubClient
+      >,
+    );
     mockOctokit.rest.repos.getContent.mockResolvedValue({
       data: {
         type: "file",
-        content: Buffer.from("# Changelog\n## [1.1.0] - 2024-01-01\n- New feature").toString("base64"),
+        content: Buffer.from(
+          "# Changelog\n## [1.1.0] - 2024-01-01\n- New feature",
+        ).toString("base64"),
       },
     });
 
-    // Mock changelog parser
     vi.mocked(changelogModule.parser).mockReturnValue({
       releases: [
         {
@@ -89,10 +93,6 @@ describe("POST /api/webhooks/github", () => {
         },
       ],
     } as ReturnType<typeof changelogModule.parser>);
-
-    vi.spyOn(database, 'transaction').mockImplementation(async (callback) => {
-      await callback(database);
-    });
 
     const body = JSON.stringify(mockPushPayload);
     const request = new NextRequest("http://localhost/api/webhooks/github", {
@@ -218,9 +218,12 @@ describe("POST /api/webhooks/github", () => {
       raw: "# Changelog\n## 1.0.0\n- Initial release",
     });
 
-    vi.mocked(githubModule.createGitHubClient).mockReturnValue(mockOctokit as ReturnType<typeof githubModule.createGitHubClient>);
-    
-    // Mock GitHub API failure
+    vi.mocked(githubModule.createGitHubClient).mockReturnValue(
+      mockOctokit as unknown as ReturnType<
+        typeof githubModule.createGitHubClient
+      >,
+    );
+
     mockOctokit.rest.repos.getContent.mockRejectedValue(new Error("API Error"));
 
     const body = JSON.stringify(mockPushPayload);
@@ -284,38 +287,42 @@ describe("POST /api/webhooks/github", () => {
       installationId: "webhook-duplicate-123",
     });
 
-    const insertedChangelog = await database.insert(changelogs).values({
-      id: randomUUID(),
-      userId: "user123",
-      installationId: randomUUID(),
-      repositoryId: 999456,
-      owner: "webhook-test-owner",
-      name: "webhook-test-repo",
-      raw: "# Changelog\n## 1.0.0\n- Initial release",
-    }).returning();
-
-    // Insert existing version
-    await database
-      .insert(versions)
+    const insertedChangelog = await database
+      .insert(changelogs)
       .values({
         id: randomUUID(),
         userId: "user123",
-        changelogId: insertedChangelog[0].id,
-        version: "1.0.0",
-        releaseDate: new Date("2024-01-01"),
-        content: "Initial release",
-      });
+        installationId: randomUUID(),
+        repositoryId: 999456,
+        owner: "webhook-test-owner",
+        name: "webhook-test-repo",
+        raw: "# Changelog\n## 1.0.0\n- Initial release",
+      })
+      .returning();
 
-    // Mock GitHub API
-    vi.mocked(githubModule.createGitHubClient).mockReturnValue(mockOctokit as ReturnType<typeof githubModule.createGitHubClient>);
+    await database.insert(versions).values({
+      id: randomUUID(),
+      userId: "user123",
+      changelogId: insertedChangelog[0].id,
+      version: "1.0.0",
+      releaseDate: new Date("2024-01-01"),
+      content: "Initial release",
+    });
+
+    vi.mocked(githubModule.createGitHubClient).mockReturnValue(
+      mockOctokit as unknown as ReturnType<
+        typeof githubModule.createGitHubClient
+      >,
+    );
     mockOctokit.rest.repos.getContent.mockResolvedValue({
       data: {
         type: "file",
-        content: Buffer.from("# Changelog\n## [1.0.0] - 2024-01-01\n- Initial release").toString("base64"),
+        content: Buffer.from(
+          "# Changelog\n## [1.0.0] - 2024-01-01\n- Initial release",
+        ).toString("base64"),
       },
     });
 
-    // Mock changelog parser - returns same version that already exists
     vi.mocked(changelogModule.parser).mockReturnValue({
       releases: [
         {

@@ -99,7 +99,6 @@ export default function Component({
                     setValue(newValue);
                     setOpen(false);
 
-                    // Navigate to the version URL
                     router.push(`/c/${owner}/${name}/${newValue}`);
 
                     if (onVersionSelect && newValue) {

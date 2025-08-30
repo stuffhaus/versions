@@ -47,7 +47,7 @@ export default async function Page({ params }: PageProps) {
       <Header owner={owner} name={name} version={version} />
 
       <div className="prose max-w-none">
-        <Markdown>{version.content}</Markdown>
+        <Markdown>{version.content as string}</Markdown>
       </div>
     </div>
   );
