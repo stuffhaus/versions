@@ -1,7 +1,7 @@
 import { database } from "@/lib/database";
 import { changelogs, versions } from "@/database/schema";
 import { and, desc, eq } from "drizzle-orm";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import {
   createErrorResponse,
   createSuccessResponse,

@@ -1,7 +1,7 @@
 import Markdown from "react-markdown";
 import { database } from "@/lib/database";
 import { changelogs, versions } from "@/database/schema";
-import { and, desc, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Header from "../components/header";
 

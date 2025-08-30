@@ -44,7 +44,7 @@ describe("POST /api/webhooks/github", () => {
     vi.spyOn(crypto, "createHmac").mockReturnValue({
       update: vi.fn().mockReturnThis(),
       digest: vi.fn().mockReturnValue("valid-signature"),
-    } as any);
+    } as crypto.Hmac);
     vi.spyOn(crypto, "timingSafeEqual").mockReturnValue(true);
   });
 
@@ -71,7 +71,7 @@ describe("POST /api/webhooks/github", () => {
     });
 
     // Mock GitHub API
-    vi.mocked(githubModule.createGitHubClient).mockReturnValue(mockOctokit as any);
+    vi.mocked(githubModule.createGitHubClient).mockReturnValue(mockOctokit as ReturnType<typeof githubModule.createGitHubClient>);
     mockOctokit.rest.repos.getContent.mockResolvedValue({
       data: {
         type: "file",
@@ -88,7 +88,7 @@ describe("POST /api/webhooks/github", () => {
           toString: () => "## [1.1.0] - 2024-01-01\n- New feature",
         },
       ],
-    } as any);
+    } as ReturnType<typeof changelogModule.parser>);
 
     vi.spyOn(database, 'transaction').mockImplementation(async (callback) => {
       await callback(database);
@@ -218,7 +218,7 @@ describe("POST /api/webhooks/github", () => {
       raw: "# Changelog\n## 1.0.0\n- Initial release",
     });
 
-    vi.mocked(githubModule.createGitHubClient).mockReturnValue(mockOctokit as any);
+    vi.mocked(githubModule.createGitHubClient).mockReturnValue(mockOctokit as ReturnType<typeof githubModule.createGitHubClient>);
     
     // Mock GitHub API failure
     mockOctokit.rest.repos.getContent.mockRejectedValue(new Error("API Error"));
@@ -307,7 +307,7 @@ describe("POST /api/webhooks/github", () => {
       });
 
     // Mock GitHub API
-    vi.mocked(githubModule.createGitHubClient).mockReturnValue(mockOctokit as any);
+    vi.mocked(githubModule.createGitHubClient).mockReturnValue(mockOctokit as ReturnType<typeof githubModule.createGitHubClient>);
     mockOctokit.rest.repos.getContent.mockResolvedValue({
       data: {
         type: "file",
@@ -324,7 +324,7 @@ describe("POST /api/webhooks/github", () => {
           toString: () => "## [1.0.0] - 2024-01-01\n- Initial release",
         },
       ],
-    } as any);
+    } as ReturnType<typeof changelogModule.parser>);
 
     const body = JSON.stringify(mockPushPayload);
     const request = new NextRequest("http://localhost/api/webhooks/github", {
