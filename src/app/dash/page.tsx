@@ -1,30 +1,45 @@
-"use client";
-
-import useSWR from "swr";
+import { changelogs, installations } from "@/database/schema";
+import { database } from "@/lib/database";
+import { stackServerApp } from "@/stack";
 import Install from "./components/install";
-import { toast } from "sonner";
+import { eq } from "drizzle-orm";
+import Link from "next/link";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
-
-export default function Page() {
-  const { data, error, isLoading } = useSWR<{ hasInstalled: boolean }>(
-    "/api/has-installed",
-    fetcher,
+export default async function Page() {
+  const user = await stackServerApp.getUser({ or: "throw" });
+  const installationCount = await database.$count(
+    installations,
+    eq(installations.userId, user.id),
   );
 
-  if (isLoading) return;
+  const hasInstalled = installationCount > 0;
 
-  if (error) {
-    console.error(error);
-
-    toast("There was an error fetching the installation status.");
-
-    return;
-  }
-
-  if (!data?.hasInstalled) {
+  if (!hasInstalled) {
     return <Install />;
   }
 
-  return <></>;
+  const changes = await database
+    .select()
+    .from(changelogs)
+    .where(eq(changelogs.userId, user.id));
+
+  return (
+    <div>
+      <h1 className="text-4xl font-bold pb-6">CHANGELOGs</h1>
+
+      <ul className="list-none">
+        {changes.map((change) => (
+          <li key={change.id}>
+            <Link
+              key={change.id}
+              href={`/c/${change.owner}/${change.name}`}
+              className=" px-4 py-2 hover:bg-amber-100"
+            >
+              <span className="font-bold">{change.owner}</span>/{change.name}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }

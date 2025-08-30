@@ -5,6 +5,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import Link from "next/link";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,14 +34,27 @@ export default function RootLayout({
       >
         <StackProvider app={stackServerApp}>
           <StackTheme>
-            <div className="flex flex-col justify-between items-center w-lg m-auto my-8">
+            <div className="flex flex-col w-2xl m-auto my-8">
               <header className="flex justify-between items-center w-full p-4">
-                <h1 className="font-mono">Versions</h1>
+                <div className="flex flex-row gap-2">
+                  <h1 className="font-mono font-bold">Versions</h1>
+
+                  <span className="text-gray-500">·</span>
+
+                  {stackServerApp.getUser().then(
+                    (user) =>
+                      user && (
+                        <Link href="/dash" className="hover:underline">
+                          Dashboard
+                        </Link>
+                      ),
+                  )}
+                </div>
 
                 <UserButton />
               </header>
 
-              <div>{children}</div>
+              <div className="p-4">{children}</div>
             </div>
           </StackTheme>
         </StackProvider>
