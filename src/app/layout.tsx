@@ -6,6 +6,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import Link from "next/link";
+import Image from "next/image";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,7 +38,9 @@ export default function RootLayout({
             <div className="flex flex-col w-2xl m-auto my-8">
               <header className="flex justify-between items-center w-full p-4">
                 <div className="flex flex-row gap-2">
-                  <h1 className="font-mono font-bold">Versions</h1>
+                  <Link className="font-mono font-bold" href="/">
+                    Versions
+                  </Link>
 
                   <span className="text-gray-500">·</span>
 
@@ -55,6 +58,17 @@ export default function RootLayout({
               </header>
 
               <div className="p-4">{children}</div>
+
+              <footer className="flex justify-center items-center w-full p-4 mt-16">
+                <Link href="https://www.stuffhaus.dev" target="_blank">
+                  <Image
+                    src="/watermark.svg"
+                    alt="Watermark"
+                    width={32}
+                    height={32}
+                  />
+                </Link>
+              </footer>
             </div>
           </StackTheme>
         </StackProvider>

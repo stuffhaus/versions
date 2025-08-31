@@ -4,6 +4,7 @@ import { changelogs, versions } from "@/database/schema";
 import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Header from "../components/header";
+import Reactions from "../components/reactions";
 
 interface PageProps {
   params: Promise<{
@@ -46,7 +47,7 @@ export default async function Page({ params }: PageProps) {
   return (
     <div>
       <h1 className="text-4xl mb-4">
-        <span className="font-bold ">{owner}</span>/{name}/{version}
+        {owner}/{name}/<span className="font-bold ">{version}</span>
       </h1>
 
       <Header owner={owner} name={name} version={foundVersion} />
@@ -54,6 +55,11 @@ export default async function Page({ params }: PageProps) {
       <div className="prose max-w-none">
         <Markdown>{foundVersion.content as string}</Markdown>
       </div>
+
+      <Reactions
+        versionId={foundVersion.id}
+        initialReactions={foundVersion.reactions || {}}
+      />
     </div>
   );
 }
