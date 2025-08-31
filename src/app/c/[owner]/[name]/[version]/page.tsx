@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Header from "../components/header";
 import Reactions from "../components/reactions";
+import Head from "next/head";
 
 interface PageProps {
   params: Promise<{
@@ -45,26 +46,35 @@ export default async function Page({ params }: PageProps) {
   const foundVersion = found[0];
 
   return (
-    <div>
-      <h1 className="text-4xl mb-4">
-        {owner}/{name}/<span className="font-bold ">{version}</span>
-      </h1>
+    <>
+      <Head>
+        <meta
+          property="og:image"
+          content={`/api/og?owner=${owner}&name=${name}&version=${version}`}
+        />
+      </Head>
 
-      <Header
-        owner={owner}
-        name={name}
-        changelog={changelog[0]}
-        version={foundVersion}
-      />
+      <div>
+        <h1 className="text-4xl mb-4">
+          {owner}/{name}/<span className="font-bold ">{version}</span>
+        </h1>
 
-      <div className="prose max-w-none">
-        <Markdown>{foundVersion.content as string}</Markdown>
+        <Header
+          owner={owner}
+          name={name}
+          changelog={changelog[0]}
+          version={foundVersion}
+        />
+
+        <div className="prose max-w-none">
+          <Markdown>{foundVersion.content as string}</Markdown>
+        </div>
+
+        <Reactions
+          versionId={foundVersion.id}
+          initialReactions={foundVersion.reactions || {}}
+        />
       </div>
-
-      <Reactions
-        versionId={foundVersion.id}
-        initialReactions={foundVersion.reactions || {}}
-      />
-    </div>
+    </>
   );
 }
