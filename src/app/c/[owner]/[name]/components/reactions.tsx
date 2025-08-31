@@ -3,6 +3,11 @@
 import { useState, useEffect } from "react";
 import EmojiPicker from "emoji-picker-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ReactionsProps {
   versionId: string;
@@ -67,26 +72,27 @@ export default function Reactions({
   };
 
   return (
-    <div className="mt-8">
-      <div className="flex gap-1 mb-3">
-        <div className="relative">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowPicker(!showPicker)}
-            disabled={isLoading}
-          >
-            ➕
-          </Button>
+    <div className="mt-6">
+      <div className="flex gap-1">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPicker(!showPicker)}
+              disabled={isLoading}
+            >
+              🎉 ➕
+            </Button>
+          </DropdownMenuTrigger>
 
-          {showPicker && (
-            <div className="absolute top-full left-0 mt-2 z-10">
-              <EmojiPicker
-                onEmojiClick={(emojiData) => addReaction(emojiData.emoji)}
-              />
-            </div>
-          )}
-        </div>
+          <DropdownMenuContent>
+            <EmojiPicker
+              skinTonesDisabled={true}
+              onEmojiClick={(emojiData) => addReaction(emojiData.emoji)}
+            />
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {Object.entries(reactions).map(([emoji, count]) => (
           <div

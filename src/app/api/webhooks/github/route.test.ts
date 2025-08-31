@@ -67,6 +67,7 @@ describe("POST /api/webhooks/github", () => {
       repositoryId: 999456,
       owner: "webhook-test-owner",
       name: "webhook-test-repo",
+      description: "Test Changelog",
       raw: "# Changelog\n## 1.0.0\n- Initial release",
     });
 
@@ -215,6 +216,7 @@ describe("POST /api/webhooks/github", () => {
       repositoryId: 999456,
       owner: "webhook-test-owner",
       name: "webhook-test-repo",
+      description: "Test Changelog",
       raw: "# Changelog\n## 1.0.0\n- Initial release",
     });
 
@@ -296,6 +298,7 @@ describe("POST /api/webhooks/github", () => {
         repositoryId: 999456,
         owner: "webhook-test-owner",
         name: "webhook-test-repo",
+        description: "Test Changelog",
         raw: "# Changelog\n## 1.0.0\n- Initial release",
       })
       .returning();

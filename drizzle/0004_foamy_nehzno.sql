@@ -1,0 +1,1 @@
+ALTER TABLE "changelogs" ADD COLUMN "description" text NOT NULL;

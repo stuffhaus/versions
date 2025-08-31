@@ -23,6 +23,7 @@ describe("POST /api/versions/[id]/reactions", () => {
       repositoryId: 12345,
       owner: "test-owner",
       name: "test-repo",
+      description: "Test Changelog",
       raw: "# Changelog\n## 1.0.0\n- Initial release",
     });
 
@@ -38,11 +39,14 @@ describe("POST /api/versions/[id]/reactions", () => {
     });
 
     // Make request
-    const request = new NextRequest("http://localhost/api/versions/123/reactions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reaction: "👍" }),
-    });
+    const request = new NextRequest(
+      "http://localhost/api/versions/123/reactions",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reaction: "👍" }),
+      },
+    );
     const params = Promise.resolve({ id: versionId });
 
     const response = await POST(request, { params });
@@ -69,6 +73,7 @@ describe("POST /api/versions/[id]/reactions", () => {
       repositoryId: 12345,
       owner: "test-owner",
       name: "test-repo",
+      description: "Test Changelog",
       raw: "# Changelog\n## 1.0.0\n- Initial release",
     });
 
@@ -84,11 +89,14 @@ describe("POST /api/versions/[id]/reactions", () => {
     });
 
     // Make request
-    const request = new NextRequest("http://localhost/api/versions/123/reactions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reaction: "👍" }),
-    });
+    const request = new NextRequest(
+      "http://localhost/api/versions/123/reactions",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reaction: "👍" }),
+      },
+    );
     const params = Promise.resolve({ id: versionId });
 
     const response = await POST(request, { params });
@@ -115,6 +123,7 @@ describe("POST /api/versions/[id]/reactions", () => {
       repositoryId: 12345,
       owner: "test-owner",
       name: "test-repo",
+      description: "Test Changelog",
       raw: "# Changelog\n## 1.0.0\n- Initial release",
     });
 
@@ -130,11 +139,14 @@ describe("POST /api/versions/[id]/reactions", () => {
     });
 
     // Make request
-    const request = new NextRequest("http://localhost/api/versions/123/reactions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reaction: "🎉" }),
-    });
+    const request = new NextRequest(
+      "http://localhost/api/versions/123/reactions",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reaction: "🎉" }),
+      },
+    );
     const params = Promise.resolve({ id: versionId });
 
     const response = await POST(request, { params });
@@ -145,11 +157,14 @@ describe("POST /api/versions/[id]/reactions", () => {
   });
 
   it("should return 404 for non-existent version", async () => {
-    const request = new NextRequest("http://localhost/api/versions/123/reactions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reaction: "👍" }),
-    });
+    const request = new NextRequest(
+      "http://localhost/api/versions/123/reactions",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reaction: "👍" }),
+      },
+    );
     const params = Promise.resolve({ id: randomUUID() }); // Valid UUID format
 
     const response = await POST(request, { params });
@@ -160,11 +175,14 @@ describe("POST /api/versions/[id]/reactions", () => {
   });
 
   it("should return 400 for invalid reaction (empty string)", async () => {
-    const request = new NextRequest("http://localhost/api/versions/123/reactions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reaction: "" }),
-    });
+    const request = new NextRequest(
+      "http://localhost/api/versions/123/reactions",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reaction: "" }),
+      },
+    );
     const params = Promise.resolve({ id: "some-id" });
 
     const response = await POST(request, { params });
@@ -175,11 +193,14 @@ describe("POST /api/versions/[id]/reactions", () => {
   });
 
   it("should return 400 for invalid reaction (null)", async () => {
-    const request = new NextRequest("http://localhost/api/versions/123/reactions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reaction: null }),
-    });
+    const request = new NextRequest(
+      "http://localhost/api/versions/123/reactions",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reaction: null }),
+      },
+    );
     const params = Promise.resolve({ id: "some-id" });
 
     const response = await POST(request, { params });
@@ -190,11 +211,14 @@ describe("POST /api/versions/[id]/reactions", () => {
   });
 
   it("should return 400 for invalid reaction (not a string)", async () => {
-    const request = new NextRequest("http://localhost/api/versions/123/reactions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reaction: 123 }),
-    });
+    const request = new NextRequest(
+      "http://localhost/api/versions/123/reactions",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reaction: 123 }),
+      },
+    );
     const params = Promise.resolve({ id: "some-id" });
 
     const response = await POST(request, { params });
@@ -205,11 +229,14 @@ describe("POST /api/versions/[id]/reactions", () => {
   });
 
   it("should return 400 for invalid reaction format (special chars)", async () => {
-    const request = new NextRequest("http://localhost/api/versions/123/reactions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reaction: "<script>" }),
-    });
+    const request = new NextRequest(
+      "http://localhost/api/versions/123/reactions",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reaction: "<script>" }),
+      },
+    );
     const params = Promise.resolve({ id: "some-id" });
 
     const response = await POST(request, { params });
@@ -236,6 +263,7 @@ describe("POST /api/versions/[id]/reactions", () => {
       repositoryId: 12345,
       owner: "test-owner",
       name: "test-repo",
+      description: "Test Changelog",
       raw: "# Changelog\n## 1.0.0\n- Initial release",
     });
 
@@ -253,11 +281,14 @@ describe("POST /api/versions/[id]/reactions", () => {
     const validReactions = ["👍", "❤️", "🎉", "🚀", "👎", "😂"];
 
     for (const emoji of validReactions) {
-      const request = new NextRequest("http://localhost/api/versions/123/reactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reaction: emoji }),
-      });
+      const request = new NextRequest(
+        "http://localhost/api/versions/123/reactions",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reaction: emoji }),
+        },
+      );
       const params = Promise.resolve({ id: versionId });
 
       const response = await POST(request, { params });
@@ -266,11 +297,14 @@ describe("POST /api/versions/[id]/reactions", () => {
   });
 
   it("should handle malformed JSON", async () => {
-    const request = new NextRequest("http://localhost/api/versions/123/reactions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: "invalid json",
-    });
+    const request = new NextRequest(
+      "http://localhost/api/versions/123/reactions",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "invalid json",
+      },
+    );
     const params = Promise.resolve({ id: "some-id" });
 
     const response = await POST(request, { params });
@@ -295,6 +329,7 @@ describe("POST /api/versions/[id]/reactions", () => {
       repositoryId: 12345,
       owner: "test-owner",
       name: "test-repo",
+      description: "Test Changelog",
       raw: "# Changelog\n## 1.0.0\n- Initial release",
     });
 
@@ -310,11 +345,14 @@ describe("POST /api/versions/[id]/reactions", () => {
     });
 
     // Make request with whitespace
-    const request = new NextRequest("http://localhost/api/versions/123/reactions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reaction: "  👍  " }),
-    });
+    const request = new NextRequest(
+      "http://localhost/api/versions/123/reactions",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reaction: "  👍  " }),
+      },
+    );
     const params = Promise.resolve({ id: versionId });
 
     const response = await POST(request, { params });
