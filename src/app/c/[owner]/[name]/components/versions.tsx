@@ -69,9 +69,10 @@ export default function Component({
               : isLoading
                 ? "Loading..."
                 : "Select version..."}
+
             {value && versions[0]?.version === value && (
               <Badge variant="default" className="text-xs">
-                Latest
+                ⚡ Latest
               </Badge>
             )}
           </div>
@@ -112,6 +113,7 @@ export default function Component({
                       value === version.version ? "opacity-100" : "opacity-0",
                     )}
                   />
+
                   <div className="flex items-center justify-between w-full">
                     <div className="flex flex-col">
                       <span>{version.version}</span>
@@ -122,9 +124,10 @@ export default function Component({
                         </span>
                       )}
                     </div>
+
                     {index === 0 && (
                       <Badge variant="default" className="text-xs ml-2">
-                        Latest
+                        ⚡ Latest
                       </Badge>
                     )}
                   </div>

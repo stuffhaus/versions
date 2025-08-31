@@ -66,6 +66,7 @@ export const versions = pgTable("versions", {
   version: text().notNull(), // Version number (e.g., "1.2.3")
   releaseDate: timestamp(), // Release date from changelog
   content: json().notNull(), // Parsed markdown content for this version
+  reactions: json().$type<Record<string, number>>().default({}), // Reaction counts (e.g., { wave: 4, heart: 2 })
   ...timestamps,
 });
 
