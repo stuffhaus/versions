@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
       await database.transaction(async (tx) => {
         await tx
           .update(changelogs)
-          .set({ raw: changelogContent })
+          .set({ raw: changelogContent, description: changelog.description })
           .where(eq(changelogs.id, changelog.id));
 
         for (const version of newVersions) {

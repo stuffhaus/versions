@@ -22,6 +22,7 @@ describe("GET /api/changelogs/[owner]/[name]/versions", () => {
         repositoryId: 12345,
         owner: "versions-test-owner",
         name: "versions-test-repo",
+        description: "Test Changelog",
         raw: "# Changelog\n## 1.0.0\n- Initial release",
       })
       .returning();
@@ -89,6 +90,7 @@ describe("GET /api/changelogs/[owner]/[name]/versions", () => {
       repositoryId: 12345,
       owner: "versions-test-owner",
       name: "versions-test-repo",
+      description: "Test Changelog",
       raw: "# Changelog\n(no versions yet)",
     });
 

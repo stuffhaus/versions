@@ -4,18 +4,20 @@ import { Button } from "@/components/ui/button";
 import Versions from "./versions";
 import { Copy } from "lucide-react";
 import { copyToClipboard } from "@/lib/utils";
-import { versions } from "@/database/schema";
+import { changelogs, versions } from "@/database/schema";
 import { InferSelectModel } from "drizzle-orm";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
+import Markdown from "react-markdown";
 
 type Props = {
   owner: string;
   name: string;
+  changelog: InferSelectModel<typeof changelogs>;
   version: InferSelectModel<typeof versions>;
 };
 
-export default function Header({ owner, name, version }: Props) {
+export default function Header({ owner, name, changelog, version }: Props) {
   return (
     <div>
       <div className="flex justify-between items-center my-8">
@@ -51,6 +53,10 @@ export default function Header({ owner, name, version }: Props) {
       <div className="flex items-center gap-4 mb-4">
         <h2 className="text-2xl uppercase font-black">✍️ Changelog</h2>
         <Separator className="flex-1" />
+      </div>
+
+      <div className="prose max-w-none mb-4">
+        <Markdown>{changelog.description}</Markdown>
       </div>
     </div>
   );

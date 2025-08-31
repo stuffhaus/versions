@@ -83,6 +83,7 @@ export async function GET(request: NextRequest) {
                 repositoryId: repo.id,
                 owner: repo.owner.login,
                 name: repo.name,
+                description: parsed.description,
                 raw: decoded,
               })
               .returning();

@@ -45,7 +45,12 @@ export default async function Page({ params }: PageProps) {
         {owner}/<span className="font-bold ">{name}</span>
       </h1>
 
-      <Header owner={owner} name={name} version={version} />
+      <Header
+        owner={owner}
+        name={name}
+        changelog={changelog[0]}
+        version={version}
+      />
 
       <div className="prose max-w-none">
         <Markdown>{version.content as string}</Markdown>
