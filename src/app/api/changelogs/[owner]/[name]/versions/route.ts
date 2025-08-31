@@ -33,7 +33,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       .select()
       .from(versions)
       .where(and(eq(versions.changelogId, changelog[0].id)))
-      .orderBy(desc(versions.createdAt));
+      .orderBy(desc(versions.version));
 
     const response: VersionsListResponse = { versions: changelogVersions };
 
