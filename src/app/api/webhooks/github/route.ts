@@ -1,5 +1,5 @@
 import { database } from "@/lib/database";
-import { changelogs, versions } from "@/database/schema";
+import { changelogs, versions, installations } from "@/database/schema";
 import { and, eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 import { createGitHubClient } from "@/lib/github";
@@ -35,7 +35,12 @@ export async function POST(request: NextRequest) {
       return createErrorResponse("No signature provided", 401);
     }
 
-    if (githubEvent !== "push") {
+    // Handle different GitHub events
+    if (
+      !["push", "installation", "installation_repositories"].includes(
+        githubEvent || "",
+      )
+    ) {
       return createSuccessResponse({ message: "Event ignored" });
     }
 
@@ -60,117 +65,267 @@ export async function POST(request: NextRequest) {
       return createErrorResponse("Invalid JSON payload", 400);
     }
 
-    const validation = validateRequest(
-      GitHubWebhookPayloadSchema,
-      parsedPayload,
-    );
+    // Handle different GitHub webhook events
+    switch (githubEvent) {
+      case "installation": {
+        const { action, installation } = parsedPayload;
 
-    if (!validation.success) {
-      return createErrorResponse(`Invalid payload: ${validation.error}`, 400);
-    }
+        switch (action) {
+          case "deleted":
+            // User uninstalled the app - clean up their data
+            await database.transaction(async (tx) => {
+              // First find the installation record by GitHub installation ID
+              const installationRecord = await tx
+                .select()
+                .from(installations)
+                .where(
+                  eq(installations.installationId, installation.id.toString()),
+                )
+                .limit(1);
 
-    const payload = validation.data;
-    const { installation, repository, head_commit } = payload;
+              if (installationRecord.length === 0) {
+                console.log(
+                  `Installation ${installation.id} not found in database`,
+                );
+                return;
+              }
 
-    // Only process commits that modify CHANGELOG.md
-    const changelogFiles = ["CHANGELOG.md"];
-    const hasChangelogUpdate =
-      head_commit.modified.some((file) => changelogFiles.includes(file)) ||
-      head_commit.added.some((file) => changelogFiles.includes(file));
+              const installationUuid = installationRecord[0].id;
 
-    if (!hasChangelogUpdate) {
-      return createSuccessResponse({
-        message: "No changelog changes detected",
-      });
-    }
+              // Get all changelogs for this installation
+              const installationChangelogs = await tx
+                .select()
+                .from(changelogs)
+                .where(eq(changelogs.installationId, installationUuid));
 
-    const existingChangelog = await database
-      .select()
-      .from(changelogs)
-      .where(
-        and(
-          eq(changelogs.owner, repository.owner.login),
-          eq(changelogs.name, repository.name),
-          eq(changelogs.repositoryId, repository.id),
-        ),
-      )
-      .limit(1);
+              // Delete all versions for these changelogs
+              for (const changelog of installationChangelogs) {
+                await tx
+                  .delete(versions)
+                  .where(eq(versions.changelogId, changelog.id));
+              }
 
-    if (existingChangelog.length === 0) {
-      console.log(
-        `Changelog not found for ${repository.owner.login}/${repository.name}`,
-      );
+              // Delete all changelogs for this installation
+              await tx
+                .delete(changelogs)
+                .where(eq(changelogs.installationId, installationUuid));
 
-      return createErrorResponse("Changelog not found in database", 404);
-    }
+              // Delete the installation record
+              await tx
+                .delete(installations)
+                .where(eq(installations.id, installationUuid));
+            });
 
-    const changelog = existingChangelog[0];
-    const octokit = createGitHubClient(installation.id.toString());
-    let changelogContent;
+            console.log(
+              `Cleaned up data for uninstalled app: installation ${installation.id}`,
+            );
+            return createSuccessResponse({
+              message: "Installation cleanup completed",
+            });
 
-    try {
-      const response = await octokit.rest.repos.getContent({
-        owner: repository.owner.login,
-        repo: repository.name,
-        path: "CHANGELOG.md",
-      });
-
-      if (!Array.isArray(response.data) && response.data.type === "file") {
-        changelogContent = Buffer.from(
-          response.data.content,
-          "base64",
-        ).toString();
-      } else {
-        throw new Error("Changelog content not found");
+          default:
+            return createSuccessResponse({
+              message: "Installation event processed",
+            });
+        }
       }
-    } catch (error) {
-      console.error("Failed to fetch changelog content:", error);
 
-      return createErrorResponse("Failed to fetch changelog content", 500);
-    }
+      case "installation_repositories": {
+        const { action, installation, repositories_removed } = parsedPayload;
 
-    const parsed = parser(changelogContent);
+        switch (action) {
+          case "removed":
+            if (!repositories_removed) {
+              return createSuccessResponse({
+                message: "No repositories to remove",
+              });
+            }
 
-    const existingVersions = await database
-      .select({ version: versions.version })
-      .from(versions)
-      .where(eq(versions.changelogId, changelog.id));
+            // User removed specific repositories from the app
+            await database.transaction(async (tx) => {
+              // First find the installation record by GitHub installation ID
+              const installationRecord = await tx
+                .select()
+                .from(installations)
+                .where(
+                  eq(installations.installationId, installation.id.toString()),
+                )
+                .limit(1);
 
-    const existingVersionSet = new Set(existingVersions.map((v) => v.version));
+              if (installationRecord.length === 0) {
+                console.log(
+                  `Installation ${installation.id} not found in database`,
+                );
+                return;
+              }
 
-    // Filter out versions that already exist in database
-    const newVersions = parsed.releases.filter(
-      (release) => release.version && !existingVersionSet.has(release.version),
-    );
+              const installationUuid = installationRecord[0].id;
 
-    if (newVersions.length > 0) {
-      // Update changelog and insert new versions atomically
-      await database.transaction(async (tx) => {
-        await tx
-          .update(changelogs)
-          .set({ raw: changelogContent, description: changelog.description })
-          .where(eq(changelogs.id, changelog.id));
+              for (const repo of repositories_removed) {
+                // Get changelogs for this specific repo
+                const repoChangelogs = await tx
+                  .select()
+                  .from(changelogs)
+                  .where(
+                    and(
+                      eq(changelogs.installationId, installationUuid),
+                      eq(changelogs.repositoryId, repo.id),
+                    ),
+                  );
 
-        for (const version of newVersions) {
-          await tx.insert(versions).values({
-            userId: changelog.userId,
-            changelogId: changelog.id,
-            version: version.version!,
-            releaseDate: version.date,
-            content: version.toString(),
+                // Delete versions and changelogs for removed repositories
+                for (const changelog of repoChangelogs) {
+                  await tx
+                    .delete(versions)
+                    .where(eq(versions.changelogId, changelog.id));
+                  await tx
+                    .delete(changelogs)
+                    .where(eq(changelogs.id, changelog.id));
+                }
+              }
+            });
+
+            console.log(
+              `Cleaned up data for removed repositories from installation ${installation.id}`,
+            );
+            return createSuccessResponse({
+              message: "Repository removal cleanup completed",
+            });
+
+          default:
+            return createSuccessResponse({
+              message: "Installation repositories event processed",
+            });
+        }
+      }
+
+      case "push": {
+        // Handle push events
+        const validation = validateRequest(
+          GitHubWebhookPayloadSchema,
+          parsedPayload,
+        );
+
+        if (!validation.success) {
+          return createErrorResponse(
+            `Invalid payload: ${validation.error}`,
+            400,
+          );
+        }
+
+        const payload = validation.data;
+        const { installation, repository, head_commit } = payload;
+
+        // Only process commits that modify CHANGELOG.md
+        const changelogFiles = ["CHANGELOG.md"];
+        const hasChangelogUpdate =
+          head_commit.modified.some((file) => changelogFiles.includes(file)) ||
+          head_commit.added.some((file) => changelogFiles.includes(file));
+
+        if (!hasChangelogUpdate) {
+          return createSuccessResponse({
+            message: "No changelog changes detected",
           });
         }
-      });
 
-      console.log(
-        `Added ${newVersions.length} new versions for ${repository.owner.login}/${repository.name}`,
-      );
+        const existingChangelog = await database
+          .select()
+          .from(changelogs)
+          .where(
+            and(
+              eq(changelogs.owner, repository.owner.login),
+              eq(changelogs.name, repository.name),
+              eq(changelogs.repositoryId, repository.id),
+            ),
+          )
+          .limit(1);
+
+        if (existingChangelog.length === 0) {
+          console.log(
+            `Changelog not found for ${repository.owner.login}/${repository.name}`,
+          );
+
+          return createErrorResponse("Changelog not found in database", 404);
+        }
+
+        const changelog = existingChangelog[0];
+        const octokit = createGitHubClient(installation.id.toString());
+        let changelogContent;
+
+        try {
+          const response = await octokit.rest.repos.getContent({
+            owner: repository.owner.login,
+            repo: repository.name,
+            path: "CHANGELOG.md",
+          });
+
+          if (!Array.isArray(response.data) && response.data.type === "file") {
+            changelogContent = Buffer.from(
+              response.data.content,
+              "base64",
+            ).toString();
+          } else {
+            throw new Error("Changelog content not found");
+          }
+        } catch (error) {
+          console.error("Failed to fetch changelog content:", error);
+
+          return createErrorResponse("Failed to fetch changelog content", 500);
+        }
+
+        const parsed = parser(changelogContent);
+
+        const existingVersions = await database
+          .select({ version: versions.version })
+          .from(versions)
+          .where(eq(versions.changelogId, changelog.id));
+
+        const existingVersionSet = new Set(
+          existingVersions.map((v) => v.version),
+        );
+
+        // Filter out versions that already exist in database
+        const newVersions = parsed.releases.filter(
+          (release) =>
+            release.version && !existingVersionSet.has(release.version),
+        );
+
+        if (newVersions.length > 0) {
+          // Update changelog and insert new versions atomically
+          await database.transaction(async (tx) => {
+            await tx
+              .update(changelogs)
+              .set({
+                raw: changelogContent,
+                description: changelog.description,
+              })
+              .where(eq(changelogs.id, changelog.id));
+
+            for (const version of newVersions) {
+              await tx.insert(versions).values({
+                userId: changelog.userId,
+                changelogId: changelog.id,
+                version: version.version!,
+                releaseDate: version.date,
+                content: version.toString(),
+              });
+            }
+          });
+
+          console.log(
+            `Added ${newVersions.length} new versions for ${repository.owner.login}/${repository.name}`,
+          );
+        }
+
+        return createSuccessResponse({
+          message: "Webhook processed successfully",
+          newVersions: newVersions.length,
+        });
+      }
+
+      default:
+        return createSuccessResponse({ message: "Event ignored" });
     }
-
-    return createSuccessResponse({
-      message: "Webhook processed successfully",
-      newVersions: newVersions.length,
-    });
   } catch (error) {
     console.error("Webhook processing error:", error);
 
