@@ -36,6 +36,13 @@
       "when": 1756654203656,
       "tag": "0004_foamy_nehzno",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1756740504349,
+      "tag": "0005_familiar_prowler",
+      "breakpoints": true
     }
   ]
 }
