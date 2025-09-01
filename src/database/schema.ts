@@ -44,7 +44,7 @@ export const changelogs = pgTable(
     repositoryId: integer().notNull(), // GitHub repository ID
     owner: text().notNull(), // Repository owner (e.g., "facebook")
     name: text().notNull(), // Repository name (e.g., "react")
-    description: text().notNull(), // Changelog description
+    description: text(), // Changelog description
     raw: text().notNull(), // Raw CHANGELOG.md content
     ...timestamps,
   },

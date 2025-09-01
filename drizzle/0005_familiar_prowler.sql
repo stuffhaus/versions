@@ -1,0 +1,1 @@
+ALTER TABLE "changelogs" ALTER COLUMN "description" DROP NOT NULL;
