@@ -23,11 +23,13 @@ export const metadata: Metadata = {
   description: "The simplest changelog app for makers.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await stackServerApp.getUser();
+
   return (
     <html lang="en">
       <body
@@ -42,19 +44,18 @@ export default function RootLayout({
                     Versions
                   </Link>
 
-                  <span className="text-gray-500">·</span>
+                  {user && (
+                    <>
+                      <span className="text-gray-500">·</span>
 
-                  {stackServerApp.getUser().then(
-                    (user) =>
-                      user && (
-                        <Link href="/dash" className="hover:underline">
-                          Dashboard
-                        </Link>
-                      ),
+                      <Link href="/dash" className="hover:underline">
+                        Dashboard
+                      </Link>
+                    </>
                   )}
                 </div>
 
-                <UserButton />
+                {user && <UserButton />}
               </header>
 
               <div className="p-4">{children}</div>
