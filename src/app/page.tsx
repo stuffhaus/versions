@@ -12,8 +12,8 @@ export default function Page() {
           className="font-bold hover:underline"
         >
           Keep a Changelog
-        </Link>{" "}
-        format—no hacks, no guessing. Just clear history, version by version.
+        </Link>
+        ; clear history, version by version.
       </p>
 
       <p className="text-xl mt-8">
