@@ -9,11 +9,12 @@ export default function Page() {
         changelogs that follow the{" "}
         <Link
           href="https://keepachangelog.com/en/1.0.0/"
+          target="_blank"
           className="font-bold hover:underline"
         >
           Keep a Changelog
-        </Link>
-        ; clear history, version by version.
+        </Link>{" "}
+        standard; clear history, version by version.
       </p>
 
       <p className="text-xl mt-8">
