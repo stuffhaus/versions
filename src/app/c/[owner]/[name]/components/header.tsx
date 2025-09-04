@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import Versions from "./versions";
-import { Copy } from "lucide-react";
+import { Copy, Rss } from "lucide-react";
 import { copyToClipboard } from "@/lib/utils";
 import { changelogs, versions } from "@/database/schema";
 import { InferSelectModel } from "drizzle-orm";
@@ -37,6 +37,17 @@ export default function Header({ owner, name, changelog, version }: Props) {
           >
             <Copy className="mr-1" />
             Copy
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              window.open(`/api/changelogs/${owner}/${name}/rss`, '_blank');
+            }}
+          >
+            <Rss className="mr-1" />
+            RSS
           </Button>
         </div>
 

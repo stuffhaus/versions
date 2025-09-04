@@ -47,6 +47,12 @@ export default async function Page({ params }: PageProps) {
           property="og:image"
           content={`/api/og?owner=${owner}&name=${name}&version=${version.version}`}
         />
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title={`${owner}/${name} Changelog RSS`}
+          href={`/api/changelogs/${owner}/${name}/rss`}
+        />
       </Head>
 
       <div>
