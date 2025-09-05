@@ -1,0 +1,1 @@
+ALTER TABLE "versions" ALTER COLUMN "content" SET DATA TYPE text;
