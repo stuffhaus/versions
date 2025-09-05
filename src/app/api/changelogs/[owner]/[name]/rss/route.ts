@@ -2,6 +2,8 @@ import { database } from "@/lib/database";
 import { changelogs, versions } from "@/database/schema";
 import { and, desc, eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
+import RSS from "rss";
+import { marked } from "marked";
 
 interface RouteParams {
   params: Promise<{
@@ -34,34 +36,29 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const baseUrl = new URL(request.url).origin;
     const changelogUrl = `${baseUrl}/c/${owner}/${name}`;
 
-    const rssItems = changelogVersions
-      .map((version) => {
-        const versionUrl = `${baseUrl}/c/${owner}/${name}/${version.version}`;
-        const pubDate = version.releaseDate || version.createdAt;
+    const feed = new RSS({
+      title: `${owner}/${name} Changelog`,
+      description: changelog[0].description || `Changelog for ${owner}/${name}`,
+      feed_url: `${baseUrl}/api/changelogs/${owner}/${name}/rss`,
+      site_url: changelogUrl,
+      language: "en",
+      generator: "Versions App - https://github.com/stuffhaus/versions",
+    });
 
-        return `
-    <item>
-      <title>${name} v${version.version}</title>
-      <link>${versionUrl}</link>
-      <guid>${versionUrl}</guid>
-      <description><![CDATA[${version.content}]]></description>
-      <pubDate>${new Date(pubDate).toUTCString()}</pubDate>
-    </item>`;
-      })
-      .join("");
+    for (const version of changelogVersions) {
+      const versionUrl = `${baseUrl}/c/${owner}/${name}/${version.version}`;
+      const pubDate = version.releaseDate || version.createdAt;
 
-    const rssXml = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>${owner}/${name} Changelog</title>
-    <link>${changelogUrl}</link>
-    <description>${changelog[0].description || `Changelog for ${owner}/${name}`}</description>
-    <language>en</language>
-    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
-    <atom:link href="${baseUrl}/api/changelogs/${owner}/${name}/rss" rel="self" type="application/rss+xml"/>
-    <generator>Versions App - https://github.com/stuffhaus/versions</generator>${rssItems}
-  </channel>
-</rss>`;
+      feed.item({
+        title: `${name} v${version.version}`,
+        description: await marked(version.content),
+        url: versionUrl,
+        guid: versionUrl,
+        date: new Date(pubDate),
+      });
+    }
+
+    const rssXml = feed.xml({ indent: true });
 
     return new Response(rssXml, {
       headers: {

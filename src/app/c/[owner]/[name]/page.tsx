@@ -68,7 +68,7 @@ export default async function Page({ params }: PageProps) {
         />
 
         <div className="prose max-w-none">
-          <Markdown>{version.content as string}</Markdown>
+          <Markdown>{version.content}</Markdown>
         </div>
 
         <Reactions

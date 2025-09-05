@@ -66,15 +66,15 @@ describe("RSS Feed API", () => {
 
     expect(rssContent).toContain('<?xml version="1.0" encoding="UTF-8"?>');
     expect(rssContent).toContain(
-      "<title>rss-test-owner/rss-test-repo Changelog</title>",
+      "<![CDATA[rss-test-owner/rss-test-repo Changelog]]>",
     );
     expect(rssContent).toContain(
-      "<description>RSS Test Changelog</description>",
+      "<![CDATA[RSS Test Changelog]]>",
     );
-    expect(rssContent).toContain("<title>rss-test-repo v1.2.0</title>");
-    expect(rssContent).toContain("<title>rss-test-repo v1.1.0</title>");
-    expect(rssContent).toContain("New features and improvements");
-    expect(rssContent).toContain("Bug fixes and stability improvements");
+    expect(rssContent).toContain("<![CDATA[rss-test-repo v1.2.0]]>");
+    expect(rssContent).toContain("<![CDATA[rss-test-repo v1.1.0]]>");
+    expect(rssContent).toContain("<p>New features and improvements</p>");
+    expect(rssContent).toContain("<p>Bug fixes and stability improvements</p>");
     expect(rssContent).toContain(
       "http://localhost/c/rss-test-owner/rss-test-repo/1.2.0",
     );
